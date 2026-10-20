@@ -9,16 +9,18 @@ import java.util.Arrays;
 
 /**
  * Allows the separately hosted frontend (Astro dev/preview server) to call the API.
- * Origins come from {@code app.cors.allowed-origins} so deployments can override them
- * without touching code.
+ * Origin patterns come from {@code app.cors.allowed-origins} so deployments can override
+ * them without touching code. Values are treated as origin <em>patterns</em>, so a port can
+ * be wildcarded with {@code :[*]} (for example {@code http://localhost:[*]}), while exact
+ * origins keep working unchanged.
  */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
 
-    private final String[] allowedOrigins;
+    private final String[] allowedOriginPatterns;
 
     public CorsConfig(@Value("${app.cors.allowed-origins}") String allowedOrigins) {
-        this.allowedOrigins = Arrays.stream(allowedOrigins.split(","))
+        this.allowedOriginPatterns = Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
                 .toArray(String[]::new);
@@ -27,7 +29,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins(allowedOrigins)
+                .allowedOriginPatterns(allowedOriginPatterns)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .maxAge(3600);
