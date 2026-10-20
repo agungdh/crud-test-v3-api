@@ -81,7 +81,8 @@ Keep new features in these layers; do not introduce a parallel structure without
 - Request records carry Jakarta Validation annotations (`@NotBlank`, `@Size`, `@Past`, etc.).
 - Response records expose only `uuid` and business fields.
 - Never expose `id`, `fk_id`, or audit columns (`*_at`, `*_by`) to clients.
-- Use `PageResponse<T>` for paged responses (`content`, `page`, `size`, `totalElements`, `totalPages`).
+- Use `PageResponse<T>` for paged responses (`content`, `page`, `size`, `total_elements`, `total_pages`).
+- JSON is snake_case globally (`spring.jackson.property-naming-strategy: SNAKE_CASE`); keep Java fields camelCase and do not add per-field `@JsonProperty` just for casing.
 
 ### Mapping
 

@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<String> details = ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .map(error -> toSnakeCase(error.getField()) + ": " + error.getDefaultMessage())
                 .sorted()
                 .toList();
         return build(HttpStatus.BAD_REQUEST, "Validation failed", request, details);
@@ -62,5 +62,25 @@ public class GlobalExceptionHandler {
                 request.getRequestURI(),
                 details
         );
+    }
+
+    /**
+     * Mirrors the JSON property naming (snake_case) so validation details refer to the same
+     * field names clients send and receive.
+     */
+    private static String toSnakeCase(String value) {
+        StringBuilder result = new StringBuilder(value.length() + 4);
+        for (int i = 0; i < value.length(); i++) {
+            char current = value.charAt(i);
+            if (Character.isUpperCase(current)) {
+                if (i > 0) {
+                    result.append('_');
+                }
+                result.append(Character.toLowerCase(current));
+            } else {
+                result.append(current);
+            }
+        }
+        return result.toString();
     }
 }

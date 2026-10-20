@@ -17,8 +17,8 @@ public record PegawaiRequest(
         @Size(max = 150, message = "nama must be at most 150 characters")
         String nama,
 
-        @NotNull(message = "tanggalLahir is required")
-        @Past(message = "tanggalLahir must be in the past")
+        @NotNull(message = "tanggal_lahir is required")
+        @Past(message = "tanggal_lahir must be in the past")
         LocalDate tanggalLahir,
 
         @NotNull(message = "gender is required")
@@ -28,7 +28,7 @@ public record PegawaiRequest(
         @Size(max = 150, message = "email must be at most 150 characters")
         String email,
 
-        @Size(max = 30, message = "noTelepon must be at most 30 characters")
+        @Size(max = 30, message = "no_telepon must be at most 30 characters")
         String noTelepon,
 
         @Size(max = 2000, message = "alamat must be at most 2000 characters")
