@@ -32,6 +32,10 @@ docker compose up -d
 # Run one test class
 ./gradlew test --tests 'com.example.demo.DemoApplicationTests'
 
+# Seed 1000 dummy pegawai (opt-in profile; inserts then exits)
+# Override the row count with --app.seeder.total=<n>
+./gradlew bootRun --args='--spring.profiles.active=seeder --spring.main.web-application-type=none'
+
 # Stop infrastructure
 docker compose down
 
@@ -58,6 +62,7 @@ com.example.demo
 ├── exception/    # Custom exceptions + GlobalExceptionHandler
 ├── mapper/       # MapStruct mappers
 ├── repository/   # Spring Data JPA repositories
+├── seeder/       # Dev-only data seeders, gated behind the `seeder` profile
 └── service/      # Business logic and transaction boundaries
 ```
 
@@ -163,6 +168,14 @@ Errors are returned by `GlobalExceptionHandler` as `ErrorResponse`:
 - Tests cover the context load, `PegawaiService` cursor handling (Mockito), and `PegawaiRepository` keyset paging against Postgres.
 - If new tests need isolation, prefer adding Testcontainers over mocks for persistence.
 - Clean up manual smoke-test data with `TRUNCATE` only against the local development database.
+
+## Seeding
+
+- Dummy data lives behind the `seeder` profile: `PegawaiSeeder` implements `ApplicationRunner` and only activates when the profile is on, so normal startup and tests are unaffected.
+- Adds 1000 rows by default; change it with `--app.seeder.total=<n>`.
+- Existing rows are never deleted or overwritten. The run is skipped if the seeder's own generated NIPs are already present, so it is safe to re-run.
+- Rows are written in batches of 100 inside separate transactions; `hibernate.jdbc.batch_size` is set to 50 in `application.yaml` to keep inserts cheap.
+- Generated data mirrors the real shape: NIP is `yyyyMMdd` of the birth date plus a zero-padded sequence, gender is picked from gender-appropriate first names, and email/phone/address are derived from the generated name.
 
 ## Things to Avoid
 
