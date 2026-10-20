@@ -16,6 +16,8 @@ Spring Boot REST API for pegawai (employee) CRUD. Single Gradle module, package 
 
 ## Common Commands
 
+A `Makefile` wraps the commands below: run `make help` for the full list, e.g. `make up`, `make run`, `make seed`, `make test`, `make test-one TESTS=<class>`, `make seed-fresh`. The raw commands listed here remain the source of truth.
+
 ```bash
 # Start local infrastructure (Postgres on 5432, Adminer on 8083; both bound to 127.0.0.1)
 docker compose up -d
