@@ -18,5 +18,5 @@ CREATE TABLE pegawai
 );
 
 CREATE UNIQUE INDEX uq_pegawai_nip_active ON pegawai (nip) WHERE deleted_at IS NULL;
-CREATE INDEX idx_pegawai_nama ON pegawai (nama);
 CREATE INDEX idx_pegawai_uuid_hash ON pegawai USING hash (uuid);
+CREATE INDEX idx_pegawai_deleted_at ON pegawai (deleted_at);

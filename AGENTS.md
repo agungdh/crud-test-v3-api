@@ -108,7 +108,7 @@ Keep new features in these layers; do not introduce a parallel structure without
 
 ## Database and Migrations
 
-- Flyway owns schema changes; migrations live in `src/main/resources/db/migration` (currently `V1`, `V2`; next is `V3`).
+- Flyway owns schema changes; migrations live in `src/main/resources/db/migration` (currently `V1`; next is `V2`).
 - Name migrations `V<next>__<snake_case_description>.sql`.
 - Never modify an applied migration; add a new one.
 - NIP is unique among active rows via the partial index `uq_pegawai_nip_active`; the service also pre-checks with `existsByNip`. A race that bypasses the pre-check would surface as a generic `500`.
