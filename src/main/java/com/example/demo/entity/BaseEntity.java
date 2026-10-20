@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UuidGenerator;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
+@SQLRestriction("deleted_at is null")
 public abstract class BaseEntity {
 
     @Id
