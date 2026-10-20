@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDate;
 
@@ -12,6 +13,7 @@ import java.time.LocalDate;
 @Setter
 @Entity
 @Table(name = "pegawai")
+@SQLRestriction("deleted_at is null")
 public class Pegawai extends BaseEntity {
 
     @Column(name = "nip", nullable = false, length = 30)

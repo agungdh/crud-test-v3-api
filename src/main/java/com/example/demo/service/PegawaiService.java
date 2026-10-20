@@ -28,7 +28,7 @@ public class PegawaiService {
 
     @Transactional
     public PegawaiResponse create(PegawaiRequest request) {
-        if (repository.existsByNipAndDeletedAtIsNull(request.nip())) {
+        if (repository.existsByNip(request.nip())) {
             throw new DuplicateResourceException("NIP already registered: " + request.nip());
         }
 
@@ -57,7 +57,7 @@ public class PegawaiService {
         Pegawai entity = getActive(uuid);
 
         if (!entity.getNip().equals(request.nip())
-                && repository.existsByNipAndDeletedAtIsNullAndUuidNot(request.nip(), uuid)) {
+                && repository.existsByNipAndUuidNot(request.nip(), uuid)) {
             throw new DuplicateResourceException("NIP already registered: " + request.nip());
         }
 
@@ -73,7 +73,7 @@ public class PegawaiService {
     }
 
     private Pegawai getActive(UUID uuid) {
-        return repository.findFirstByUuidAndDeletedAtIsNullOrderByIdAsc(uuid)
+        return repository.findFirstByUuidOrderByIdAsc(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Pegawai not found: " + uuid));
     }
 }

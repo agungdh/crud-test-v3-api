@@ -12,18 +12,17 @@ import java.util.UUID;
 
 public interface PegawaiRepository extends JpaRepository<Pegawai, Long> {
 
-    Optional<Pegawai> findFirstByUuidAndDeletedAtIsNullOrderByIdAsc(UUID uuid);
+    Optional<Pegawai> findFirstByUuidOrderByIdAsc(UUID uuid);
 
-    boolean existsByNipAndDeletedAtIsNull(String nip);
+    boolean existsByNip(String nip);
 
-    boolean existsByNipAndDeletedAtIsNullAndUuidNot(String nip, UUID uuid);
+    boolean existsByNipAndUuidNot(String nip, UUID uuid);
 
     @Query("""
             select p from Pegawai p
-            where p.deletedAt is null
-              and (:pattern = '%%'
-                   or lower(p.nama) like :pattern
-                   or p.nip like :pattern)
+            where :pattern = '%%'
+               or lower(p.nama) like :pattern
+               or p.nip like :pattern
             """)
     Page<Pegawai> search(@Param("pattern") String pattern, Pageable pageable);
 }
