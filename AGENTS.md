@@ -177,7 +177,7 @@ Errors are returned by `GlobalExceptionHandler` as `ErrorResponse`:
 - Adds 1000 rows by default; change it with `--app.seeder.total=<n>`.
 - Existing rows are never deleted or overwritten. The run is skipped if the seeder's own generated NIPs are already present, so it is safe to re-run.
 - Rows are written in batches of 100 inside separate transactions; `hibernate.jdbc.batch_size` is set to 50 in `application.yaml` to keep inserts cheap.
-- Generated data mirrors the real shape: NIP is `yyyyMMdd` of the birth date plus a zero-padded sequence, gender is picked from gender-appropriate first names, and email/phone/address are derived from the generated name.
+- Generated data mirrors the real shape: nama is `Pegawai <n> <first> <last>`, NIP is `yyyyMMdd` of the birth date plus a zero-padded sequence, gender is picked from gender-appropriate first names, and email/phone/address are derived from the generated name (the `Pegawai <n>` prefix is kept out of the email).
 
 ## Things to Avoid
 

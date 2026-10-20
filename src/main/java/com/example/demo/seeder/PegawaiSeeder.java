@@ -124,7 +124,7 @@ public class PegawaiSeeder implements ApplicationRunner {
         boolean male = random.nextBoolean();
         String firstName = pick(male ? MALE_FIRST_NAMES : FEMALE_FIRST_NAMES, random);
         String lastName = pick(LAST_NAMES, random);
-        String nama = firstName + " " + lastName;
+        String nama = "Pegawai %d %s %s".formatted(sequence, firstName, lastName);
 
         LocalDate tanggalLahir = LocalDate.of(
                 random.nextInt(1960, 2001),
@@ -135,9 +135,11 @@ public class PegawaiSeeder implements ApplicationRunner {
         // NIP mirrors the real format: yyyyMMdd of birth date plus a zero-padded sequence.
         String nip = tanggalLahir.toString().replace("-", "") + String.format("%06d", sequence);
 
-        String email = nama.toLowerCase()
-                .replace(" ", ".")
-                .replaceAll("[^a-z.]", "") + sequence + "@example.com";
+        // Built from the name parts rather than the display name, so the "Pegawai <n>" prefix
+        // does not end up in the address.
+        String email = "%s.%s%d@example.com".formatted(firstName, lastName, sequence)
+                .toLowerCase()
+                .replace(" ", ".");
 
         String noTelepon = "08" + String.format("%010d", random.nextLong(10_000_000_000L));
 
