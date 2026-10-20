@@ -113,7 +113,7 @@ Keep new features in these layers; do not introduce a parallel structure without
 - `POST` returns `201`, `PUT` returns `200`, `DELETE` returns `204`.
 - List endpoint is cursor-based: fixed page size of 20, ordered by `id desc`, cursor is the `uuid` of the last row. Search matches `lower(nama)` against a lowercased pattern and `nip` with a plain `like`; changing `search` mid-pagination is the client's responsibility.
 - springdoc defaults: Swagger UI at `/swagger-ui.html`, spec at `/v3/api-docs`.
-- CORS: `CorsConfig` allows browser calls to `/pegawai/**` from `app.cors.allowed-origins` (default `http://localhost:4321,http://127.0.0.1:4321`, override with `CORS_ALLOWED_ORIGINS`).
+- CORS: `CorsConfig` allows browser calls to every path from `app.cors.allowed-origins` (default `http://localhost:4321,http://127.0.0.1:4321`, override with `CORS_ALLOWED_ORIGINS`).
 
 ## Database and Migrations
 
