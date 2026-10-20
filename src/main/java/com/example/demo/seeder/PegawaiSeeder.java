@@ -93,25 +93,31 @@ public class PegawaiSeeder implements ApplicationRunner {
         int inserted = 0;
         List<Pegawai> batch = new ArrayList<>(BATCH_SIZE);
         batch.add(mapper.toEntity(first));
-        inserted++;
 
         for (int sequence = 2; sequence <= total; sequence++) {
             batch.add(mapper.toEntity(randomRequest(sequence, random)));
             if (batch.size() == BATCH_SIZE) {
-                List<Pegawai> pending = List.copyOf(batch);
-                transactionTemplate.executeWithoutResult(status -> repository.saveAll(pending));
-                inserted += batch.size();
-                batch.clear();
+                inserted += flush(batch);
             }
         }
 
         if (!batch.isEmpty()) {
-            List<Pegawai> pending = List.copyOf(batch);
-            transactionTemplate.executeWithoutResult(status -> repository.saveAll(pending));
-            inserted += pending.size();
+            inserted += flush(batch);
         }
 
         log.info("Seeder inserted {} pegawai", inserted);
+    }
+
+    /**
+     * Writes the pending batch in its own transaction and clears it.
+     *
+     * @return the number of rows written
+     */
+    private int flush(List<Pegawai> batch) {
+        List<Pegawai> pending = List.copyOf(batch);
+        transactionTemplate.executeWithoutResult(status -> repository.saveAll(pending));
+        batch.clear();
+        return pending.size();
     }
 
     private PegawaiRequest randomRequest(int sequence, Random random) {
