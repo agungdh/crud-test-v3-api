@@ -8,7 +8,7 @@ public record PegawaiResponse(
         String nip,
         String nama,
         LocalDate tanggalLahir,
-        Boolean isMale,
+        Gender gender,
         String email,
         String noTelepon,
         String alamat

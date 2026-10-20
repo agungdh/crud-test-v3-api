@@ -21,8 +21,8 @@ public record PegawaiRequest(
         @Past(message = "tanggalLahir must be in the past")
         LocalDate tanggalLahir,
 
-        @NotNull(message = "isMale is required")
-        Boolean isMale,
+        @NotNull(message = "gender is required")
+        Gender gender,
 
         @Email(message = "email is not valid")
         @Size(max = 150, message = "email must be at most 150 characters")

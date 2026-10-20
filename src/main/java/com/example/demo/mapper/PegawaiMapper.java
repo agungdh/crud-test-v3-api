@@ -1,5 +1,6 @@
 package com.example.demo.mapper;
 
+import com.example.demo.dto.Gender;
 import com.example.demo.dto.PegawaiRequest;
 import com.example.demo.dto.PegawaiResponse;
 import com.example.demo.entity.Pegawai;
@@ -23,8 +24,10 @@ public interface PegawaiMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "deletedBy", ignore = true)
+    @Mapping(target = "isMale", source = "gender")
     Pegawai toEntity(PegawaiRequest request);
 
+    @Mapping(target = "gender", source = "isMale")
     PegawaiResponse toResponse(Pegawai entity);
 
     @Mapping(target = "id", ignore = true)
@@ -35,5 +38,14 @@ public interface PegawaiMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "deletedBy", ignore = true)
+    @Mapping(target = "isMale", source = "gender")
     void updateEntity(PegawaiRequest request, @MappingTarget Pegawai entity);
+
+    default Boolean toIsMale(Gender gender) {
+        return gender == null ? null : gender == Gender.MALE;
+    }
+
+    default Gender toGender(Boolean isMale) {
+        return isMale == null ? null : (isMale ? Gender.MALE : Gender.FEMALE);
+    }
 }
