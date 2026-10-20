@@ -100,7 +100,7 @@ Keep new features in these layers; do not introduce a parallel structure without
 
 ### Controllers
 
-- Base path: `/api/v1/<resource>`.
+- Base path: `/<resource>` (no API version prefix).
 - Use `@Valid` on request bodies.
 - Return DTOs, never entities.
 - `POST` returns `201`, `PUT` returns `200`, `DELETE` returns `204`.
@@ -127,11 +127,11 @@ When adding relations:
 ## API Endpoints
 
 ```
-POST   /api/v1/pegawai
-GET    /api/v1/pegawai?search=&page=&size=&sort=
-GET    /api/v1/pegawai/{uuid}
-PUT    /api/v1/pegawai/{uuid}
-DELETE /api/v1/pegawai/{uuid}
+POST   /pegawai
+GET    /pegawai?search=&page=&size=&sort=
+GET    /pegawai/{uuid}
+PUT    /pegawai/{uuid}
+DELETE /pegawai/{uuid}
 ```
 
 Errors are returned by `GlobalExceptionHandler` as `ErrorResponse`:
