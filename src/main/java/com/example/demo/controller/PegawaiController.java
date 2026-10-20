@@ -1,13 +1,11 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.PageResponse;
+import com.example.demo.dto.CursorPageResponse;
 import com.example.demo.dto.PegawaiRequest;
 import com.example.demo.dto.PegawaiResponse;
 import com.example.demo.service.PegawaiService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,11 +34,11 @@ public class PegawaiController {
     }
 
     @GetMapping
-    public PageResponse<PegawaiResponse> search(
+    public CursorPageResponse<PegawaiResponse> search(
             @RequestParam(required = false) String search,
-            @PageableDefault(size = 10, sort = "nama") Pageable pageable
+            @RequestParam(required = false) UUID cursor
     ) {
-        return service.search(search, pageable);
+        return service.search(search, cursor);
     }
 
     @GetMapping("/{uuid}")

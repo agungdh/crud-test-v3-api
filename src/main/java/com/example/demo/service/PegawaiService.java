@@ -1,26 +1,30 @@
 package com.example.demo.service;
 
-import com.example.demo.dto.PageResponse;
+import com.example.demo.dto.CursorPageResponse;
 import com.example.demo.dto.PegawaiRequest;
 import com.example.demo.dto.PegawaiResponse;
 import com.example.demo.entity.Pegawai;
 import com.example.demo.exception.DuplicateResourceException;
+import com.example.demo.exception.InvalidCursorException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.mapper.PegawaiMapper;
 import com.example.demo.repository.PegawaiRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.AuditorAware;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class PegawaiService {
+
+    private static final int PAGE_SIZE = 20;
 
     private final PegawaiRepository repository;
     private final PegawaiMapper mapper;
@@ -42,14 +46,25 @@ public class PegawaiService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<PegawaiResponse> search(String search, Pageable pageable) {
+    public CursorPageResponse<PegawaiResponse> search(String search, UUID cursor) {
         String pattern = (search == null || search.isBlank())
                 ? "%%"
                 : "%" + search.trim().toLowerCase() + "%";
+        PageRequest pageRequest = PageRequest.of(0, PAGE_SIZE);
 
-        Page<PegawaiResponse> page = repository.search(pattern, pageable)
-                .map(mapper::toResponse);
-        return PageResponse.from(page);
+        Slice<Pegawai> slice = (cursor == null)
+                ? repository.search(pattern, pageRequest)
+                : repository.searchBeforeId(pattern, resolveCursorId(cursor), pageRequest);
+
+        List<Pegawai> rows = slice.getContent();
+        List<PegawaiResponse> content = rows.stream()
+                .map(mapper::toResponse)
+                .toList();
+        UUID nextCursor = (slice.hasNext() && !rows.isEmpty())
+                ? rows.getLast().getUuid()
+                : null;
+
+        return new CursorPageResponse<>(content, nextCursor);
     }
 
     @Transactional
@@ -75,5 +90,11 @@ public class PegawaiService {
     private Pegawai getActive(UUID uuid) {
         return repository.findFirstByUuidOrderByIdAsc(uuid)
                 .orElseThrow(() -> new ResourceNotFoundException("Pegawai not found: " + uuid));
+    }
+
+    private Long resolveCursorId(UUID cursor) {
+        return repository.findFirstByUuidOrderByIdAsc(cursor)
+                .map(Pegawai::getId)
+                .orElseThrow(() -> new InvalidCursorException("Invalid cursor: " + cursor));
     }
 }

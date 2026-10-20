@@ -81,7 +81,7 @@ Keep new features in these layers; do not introduce a parallel structure without
 - Request records carry Jakarta Validation annotations (`@NotBlank`, `@Size`, `@Past`, etc.).
 - Response records expose only `uuid` and business fields.
 - Never expose `id`, `fk_id`, or audit columns (`*_at`, `*_by`) to clients.
-- Use `PageResponse<T>` for paged responses (`content`, `page`, `size`, `total_elements`, `total_pages`).
+- Use `CursorPageResponse<T>` for list responses (`content`, `next_cursor`); `next_cursor` is null when there are no more rows.
 - JSON is snake_case globally (`spring.jackson.property-naming-strategy: SNAKE_CASE`); keep Java fields camelCase and do not add per-field `@JsonProperty` just for casing.
 
 ### Mapping
@@ -95,7 +95,7 @@ Keep new features in these layers; do not introduce a parallel structure without
 - Concrete `@Service` classes with constructor injection (`@RequiredArgsConstructor`); no interfaces unless explicitly required.
 - Transaction boundaries belong here: `@Transactional` for writes, `@Transactional(readOnly = true)` for reads.
 - Because `open-in-view` is `false`, lazy loading must happen inside the service transaction.
-- Throw `ResourceNotFoundException` for missing active records and `DuplicateResourceException` for conflicts.
+- Throw `ResourceNotFoundException` for missing active records, `DuplicateResourceException` for conflicts, and `InvalidCursorException` when a cursor UUID does not resolve to an active row.
 - `AuditorAware<Long>` currently returns `Optional.empty()` (no auth yet), so `*_by` columns stay null; `deletedBy` is only set when an auditor exists.
 
 ### Controllers
@@ -104,7 +104,7 @@ Keep new features in these layers; do not introduce a parallel structure without
 - Use `@Valid` on request bodies.
 - Return DTOs, never entities.
 - `POST` returns `201`, `PUT` returns `200`, `DELETE` returns `204`.
-- List endpoint uses `@PageableDefault(size = 10, sort = "nama")`; search matches `lower(nama)` against a lowercased pattern and `nip` with a plain `like`.
+- List endpoint is cursor-based: fixed page size of 20, ordered by `id desc`, cursor is the `uuid` of the last row. Search matches `lower(nama)` against a lowercased pattern and `nip` with a plain `like`; changing `search` mid-pagination is the client's responsibility.
 - springdoc defaults: Swagger UI at `/swagger-ui.html`, spec at `/v3/api-docs`.
 
 ## Database and Migrations
@@ -128,15 +128,31 @@ When adding relations:
 
 ```
 POST   /pegawai
-GET    /pegawai?search=&page=&size=&sort=
+GET    /pegawai?search=&cursor=<uuid>
 GET    /pegawai/{uuid}
 PUT    /pegawai/{uuid}
 DELETE /pegawai/{uuid}
 ```
 
+Pagination:
+
+- First page: omit `cursor`.
+- Next page: send `next_cursor` from the previous response as `cursor`.
+- Stop when `next_cursor` is null. A page always contains at most 20 rows.
+- Unknown or soft-deleted cursor UUIDs return `400`.
+
+Example response:
+
+```json
+{
+  "content": [],
+  "next_cursor": "3f1c9a4e-8d2b-4c6f-9a1d-2b7e5c8f0a13"
+}
+```
+
 Errors are returned by `GlobalExceptionHandler` as `ErrorResponse`:
 
-- `400` validation errors / type mismatch
+- `400` validation errors / type mismatch / invalid cursor
 - `404` not found
 - `409` duplicate NIP
 - `500` unexpected error (details are logged, not leaked)
@@ -144,7 +160,7 @@ Errors are returned by `GlobalExceptionHandler` as `ErrorResponse`:
 ## Testing
 
 - `./gradlew test` boots the full Spring context against the real Postgres instance; start Docker first.
-- The only test today is `DemoApplicationTests.contextLoads`; there is no Testcontainers setup yet.
+- Tests cover the context load, `PegawaiService` cursor handling (Mockito), and `PegawaiRepository` keyset paging against Postgres.
 - If new tests need isolation, prefer adding Testcontainers over mocks for persistence.
 - Clean up manual smoke-test data with `TRUNCATE` only against the local development database.
 
