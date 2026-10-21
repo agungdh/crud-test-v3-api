@@ -87,6 +87,7 @@ Keep new features in these layers; do not introduce a parallel structure without
 - Use Lombok `@Getter` / `@Setter`; entities are not records.
 - `@SQLRestriction("deleted_at is null")` lives on `BaseEntity`, so all entity (JPQL) queries hide soft-deleted rows automatically.
 - Soft delete only: set `deletedAt` and `deletedBy` (when available). Never hard delete.
+- Pegawai-scoped kegiatan entities: `diklat` and `ppm` extend `BaseEntity` directly (they need extra columns); the other seven (`seminar`, `webinar`, `lc`, `belajar_mandiri`, `mentoring`, `coaching`, `workshop`) extend `KegiatanBase`, which adds the `pegawai` relation plus `materi_pengembangan`, `tanggal_pelaksanaan`, and `jumlah_jam`.
 
 ### DTOs
 
@@ -123,7 +124,7 @@ Keep new features in these layers; do not introduce a parallel structure without
 
 ## Database and Migrations
 
-- Flyway owns schema changes; migrations live in `src/main/resources/db/migration` (currently `V1`; next is `V2`).
+- Flyway owns schema changes; migrations live in `src/main/resources/db/migration` (currently `V2`; next is `V3`).
 - Name migrations `V<next>__<snake_case_description>.sql`.
 - Never modify an applied migration; add a new one.
 - NIP is unique among active rows via the partial index `uq_pegawai_nip_active`; the service also pre-checks with `existsByNip`. A race that bypasses the pre-check would surface as a generic `500`.
@@ -147,6 +148,27 @@ GET    /pegawai/{uuid}
 PUT    /pegawai/{uuid}
 DELETE /pegawai/{uuid}
 ```
+
+The `jenis_pelatihan` lookup and the pegawai-scoped kegiatan resources follow the same CRUD shape:
+
+```
+POST   /jenis-pelatihan
+GET    /jenis-pelatihan?search=&cursor=<uuid>
+GET    /jenis-pelatihan/{uuid}
+PUT    /jenis-pelatihan/{uuid}
+DELETE /jenis-pelatihan/{uuid}
+
+POST   /<resource>
+GET    /<resource>?search=&pegawai_uuid=&cursor=<uuid>
+GET    /<resource>/{uuid}
+PUT    /<resource>/{uuid}
+DELETE /<resource>/{uuid}
+```
+
+`<resource>` is one of `diklat`, `ppm`, `seminar`, `webinar`, `lc`, `belajar-mandiri`, `mentoring`, `coaching`, `workshop`.
+Requests reference the owner with `pegawai_uuid` (plus `jenis_pelatihan_uuid` for `diklat`) and responses return the same UUIDs instead of nested objects.
+There is no per-user scoping or authentication yet, and no file upload (`filename`) support.
+`diklat` rejects `dari_tanggal_pelaksanaan` later than `sampai_tanggal_pelaksanaan` with `400`.
 
 Pagination:
 
@@ -174,7 +196,7 @@ Errors are returned by `GlobalExceptionHandler` as `ErrorResponse`:
 ## Testing
 
 - `./gradlew test` boots the full Spring context against the real Postgres instance; start Docker first.
-- Tests cover the context load, `PegawaiService` cursor handling (Mockito), and `PegawaiRepository` keyset paging against Postgres.
+- Tests cover the context load, `PegawaiService` cursor handling (Mockito), `PegawaiRepository` keyset paging against Postgres, and `CrudKegiatanIntegrationTest`, which runs create/get/search/update/soft-delete plus cursor paging for every kegiatan resource and `jenis_pelatihan`.
 - If new tests need isolation, prefer adding Testcontainers over mocks for persistence.
 - Clean up manual smoke-test data with `TRUNCATE` only against the local development database.
 
@@ -190,6 +212,7 @@ Errors are returned by `GlobalExceptionHandler` as `ErrorResponse`:
 ## Seeding
 
 - Dummy data lives behind the `seeder` profile: `PegawaiSeeder` implements `ApplicationRunner` and only activates when the profile is on, so normal startup and tests are unaffected.
+- `JenisPelatihanSeeder` (same profile) inserts the five lookup rows used by `diklat` (`Penjenjangan`, `MOOC`, `Sertifikasi`, `Teknis Substansif`, `Pelatihan Kepemimpinan`) and is idempotent by name.
 - Adds 1000 rows by default; change it with `--app.seeder.total=<n>`.
 - Existing rows are never deleted or overwritten. The run is skipped if the seeder's own generated NIPs are already present, so it is safe to re-run.
 - Rows are written in batches of 100 inside separate transactions; `hibernate.jdbc.batch_size` is set to 50 in `application.yaml` to keep inserts cheap.
