@@ -43,6 +43,12 @@ docker compose down
 
 # Stop and delete database volume (destructive)
 docker compose down -v
+
+# Build the container image (distroless Debian 13, Java 25, non-root)
+docker build -t demo:local .
+
+# Run the image against the local Postgres (reachable on the host network)
+docker run --rm --network host -e DB_URL=jdbc:postgresql://localhost:5432/crud demo:local
 ```
 
 Database defaults (see `compose.yml` and `application.yaml`):
@@ -171,6 +177,15 @@ Errors are returned by `GlobalExceptionHandler` as `ErrorResponse`:
 - Tests cover the context load, `PegawaiService` cursor handling (Mockito), and `PegawaiRepository` keyset paging against Postgres.
 - If new tests need isolation, prefer adding Testcontainers over mocks for persistence.
 - Clean up manual smoke-test data with `TRUNCATE` only against the local development database.
+
+## Container Image
+
+- `Dockerfile` is multi-stage: `eclipse-temurin:25-jdk` builds the boot jar, `gcr.io/distroless/java25-debian13:nonroot` runs it.
+- The jar is split with `java -Djarmode=tools ... extract --layers`, so dependencies, loader, and application code land in separate image layers. The runtime entrypoint is `java -jar /app/application.jar`.
+- The image runs as UID `65532` (distroless `nonroot`) with `-XX:MaxRAMPercentage=75` and `-XX:+ExitOnOutOfMemoryError`. Pass extra JVM flags through `JAVA_TOOL_OPTIONS`; there is no shell in the image.
+- Runtime config is environment-only: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `CORS_ALLOWED_ORIGINS`. The container exposes `8080`.
+- `.github/workflows/docker.yml` builds `linux/amd64` only (no QEMU/emulation) on push/tag/PR, pushes to `ghcr.io/<owner>/<repo>` on non-PR events, and uses the GitHub Actions layer cache. PR runs only build.
+- Images are not tested in CI (tests need Postgres); `bootJar` does not run the test suite.
 
 ## Seeding
 

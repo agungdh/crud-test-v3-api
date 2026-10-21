@@ -11,7 +11,7 @@ TESTS      ?=
 
 .DEFAULT_GOAL := help
 
-.PHONY: help up down reset logs psql run seed seed-fresh compile test test-one clean
+.PHONY: help up down reset logs psql run seed seed-fresh compile test test-one clean image image-run
 
 help: ## Show this help
 	@echo "Usage: make <target>"
@@ -55,6 +55,12 @@ test: ## Run the full test suite (needs the database up)
 test-one: ## Run a single test class: make test-one TESTS=com.example.demo.DemoApplicationTests
 	@[[ -n "$(TESTS)" ]] || { echo "TESTS is required, e.g. make test-one TESTS=com.example.demo.DemoApplicationTests"; exit 1; }
 	$(GRADLE) test --tests '$(TESTS)'
+
+image: ## Build the container image (distroless Debian 13, Java 25, non-root)
+	docker build -t demo:local .
+
+image-run: ## Run the built image against the local Postgres (host network)
+	docker run --rm --network host -e DB_URL=jdbc:postgresql://localhost:5432/crud demo:local
 
 clean: ## Remove build outputs
 	$(GRADLE) clean
